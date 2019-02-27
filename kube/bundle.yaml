@@ -55,6 +55,10 @@ spec:
       labels:
         app: etcd
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.3.3
@@ -95,6 +99,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: ETCDCTL_API
+          value: "3"
+        securityContext:
+          allowPrivilegeEscalation: false
   volumeClaimTemplates:
     - metadata:
         name: etcd-data
@@ -119,9 +127,9 @@ data:
         value: "0.0.0.0:7201"
       local:
         namespaces:
-          - namespace: default
-            type: unaggregated
-            retention: 48h
+            - namespace: default
+              type: unaggregated
+              retention: 48h
       metrics:
         scope:
           prefix: "coordinator"
@@ -157,21 +165,6 @@ data:
       client:
         writeConsistencyLevel: majority
         readConsistencyLevel: unstrict_majority
-        writeTimeout: 10s
-        fetchTimeout: 15s
-        connectTimeout: 20s
-        writeRetry:
-            initialBackoff: 500ms
-            backoffFactor: 3
-            maxRetries: 2
-            jitter: true
-        fetchRetry:
-            initialBackoff: 500ms
-            backoffFactor: 2
-            maxRetries: 3
-            jitter: true
-        backgroundHealthCheckFailLimit: 4
-        backgroundHealthCheckFailThrottleFactor: 0.5
 
       gcPercentage: 100
 
@@ -197,119 +190,7 @@ data:
 
       fs:
         filePathPrefix: /var/lib/m3db
-        writeBufferSize: 65536
-        dataReadBufferSize: 65536
-        infoReadBufferSize: 128
-        seekReadBufferSize: 4096
-        throughputLimitMbps: 100.0
-        throughputCheckEvery: 128
 
-      repair:
-        enabled: false
-        interval: 2h
-        offset: 30m
-        jitter: 1h
-        throttle: 2m
-        checkInterval: 1m
-
-      pooling:
-        blockAllocSize: 16
-        type: simple
-        seriesPool:
-            size: 262144
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        blockPool:
-            size: 262144
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        encoderPool:
-            size: 262144
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        closersPool:
-            size: 104857
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        contextPool:
-            size: 262144
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        segmentReaderPool:
-            size: 16384
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        iteratorPool:
-            size: 2048
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        fetchBlockMetadataResultsPool:
-            size: 65536
-            capacity: 32
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        fetchBlocksMetadataResultsPool:
-            size: 32
-            capacity: 4096
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        hostBlockMetadataSlicePool:
-            size: 131072
-            capacity: 3
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        blockMetadataPool:
-            size: 65536
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        blockMetadataSlicePool:
-            size: 65536
-            capacity: 32
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        blocksMetadataPool:
-            size: 65536
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        blocksMetadataSlicePool:
-            size: 32
-            capacity: 4096
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        identifierPool:
-            size: 262144
-            lowWatermark: 0.7
-            highWatermark: 1.0
-        bytesPool:
-            buckets:
-                - capacity: 16
-                  size: 524288
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 32
-                  size: 262144
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 64
-                  size: 131072
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 128
-                  size: 65536
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 256
-                  size: 65536
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 1440
-                  size: 16384
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
-                - capacity: 4096
-                  size: 8192
-                  lowWatermark: 0.7
-                  highWatermark: 1.0
       config:
         service:
             env: default_env
@@ -391,6 +272,11 @@ spec:
       labels:
         app: m3dbnode
     spec:
+      securityContext:
+        runAsNonRoot: true
+        # run as nobody user/group
+        runAsUser: 65534
+        fsGroup: 65534
       tolerations:
         - key: "dedicated-m3db"
           effect: NoSchedule
@@ -445,6 +331,8 @@ spec:
           # max name length == 15 chars
           name: coord-metrics
           protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
       volumes:
       - name: config-vol
         configMap:
@@ -452,7 +340,6 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
       terminationGracePeriodSeconds: 30
   volumeClaimTemplates:
     - metadata:

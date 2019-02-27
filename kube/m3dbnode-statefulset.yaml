@@ -66,6 +66,11 @@ spec:
       labels:
         app: m3dbnode
     spec:
+      securityContext:
+        runAsNonRoot: true
+        # run as nobody user/group
+        runAsUser: 65534
+        fsGroup: 65534
       tolerations:
         - key: "dedicated-m3db"
           effect: NoSchedule
@@ -120,6 +125,8 @@ spec:
           # max name length == 15 chars
           name: coord-metrics
           protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
       volumes:
       - name: config-vol
         configMap:
@@ -127,7 +134,6 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
       terminationGracePeriodSeconds: 30
   volumeClaimTemplates:
     - metadata:
