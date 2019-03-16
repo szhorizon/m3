@@ -68,3 +68,5 @@ db:
           initialCluster:
               - hostID: m3db_seed
                 endpoint: http://m3db_seed:2380
+
+  dataMode: 1
