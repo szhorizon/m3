@@ -1,5 +1,5 @@
-hash: d3237b672e4ee92a2a7744b9bb858923e888b1539643f96eae68ec38f3377597
-updated: 2019-03-01T17:29:06.029256-08:00
+hash: 3dfb3e5faf5ede6fab1b1948f41beb57a7c5c3584797ffa4933d1a9ad29d13ed
+updated: 2019-03-17T16:46:54.46084-04:00
 imports:
 - name: github.com/apache/thrift
   version: c2fb1c4e8c931d22617bebb0bf388cb4d5e6fcff
@@ -158,7 +158,7 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: c823c79ea1570fb5ff454033735a8e68575d1d0f
+  version: b5d812f8a3706043e23a9cd5babf2e5423744d30
   subpackages:
   - jsonpb
   - proto
@@ -212,17 +212,16 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jhump/protoreflect
-  version: f90aa080ba36727321f2bc4c61f2a282f756bfab
+  version: 8bfeffd6b414f964a56d8a0118b5f80906a59def
   subpackages:
   - desc
+  - desc/builder
   - desc/internal
   - desc/protoparse
   - dynamic
   - internal
 - name: github.com/jonboulle/clockwork
   version: 2eee05ed794112d45db504eb05aa693efd2b8b09
-- name: github.com/jroimartin/gocui
-  version: c055c87ae801372cd74a0839b972db4f7697ae5f
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/leanovate/gopter
@@ -292,10 +291,6 @@ imports:
   version: 744c0229c12ed0e4f8cb9d081a2692b3300bf705
 - name: github.com/magiconair/properties
   version: 7757cc9fdb852f7579b24170bcacda2c7471bb6a
-- name: github.com/mattn/go-runewidth
-  version: 9e777a8366cce605130a531d2cd6363d07ad7317
-  subpackages:
-  - runewidth.go
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
@@ -310,8 +305,6 @@ imports:
   version: 3536a929edddb9a5b34bd6861dc4a9647cb459fe
 - name: github.com/nightlyone/lockfile
   version: 0ad87eef1443f64d3d8c50da647e2b1552851124
-- name: github.com/nsf/termbox-go
-  version: 02980233997d87bbda048393d47b4d453f7a398d
 - name: github.com/oklog/ulid
   version: 1fe95fa015d44afc8cd427914daadb0317481b71
 - name: github.com/opentracing-contrib/go-stdlib
@@ -387,7 +380,7 @@ imports:
   subpackages:
   - fs
 - name: github.com/RoaringBitmap/roaring
-  version: 3d677d3262197ee558b85029301eb69b8239f91a
+  version: 8d778e47dd84f169ef4436abb474b0e0101a6dae
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/sergi/go-diff
@@ -411,7 +404,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 4f9190456aed1c2113ca51ea9b89219747458dc1
 - name: github.com/spf13/viper
-  version: 6d33b5a963d922d182c91e8a1c88d81fd150cfd4
+  version: 9e56dacc08fbbf8c9ee2dbc717553c758ce42bc9
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
