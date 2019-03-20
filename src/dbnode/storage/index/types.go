@@ -55,6 +55,15 @@ const (
 	InsertAsync
 )
 
+// AggregationType specifies what granularity to aggregate upto.
+type AggregationType byte
+
+// nolint
+const (
+	AggregateTagNames AggregationType = iota
+	AggregateTagNamesAndValues
+)
+
 // Query is a rich end user query to describe a set of constraints on required IDs.
 type Query struct {
 	idx.Query
@@ -78,6 +87,18 @@ type QueryResults struct {
 	Results    Results
 	Exhaustive bool
 }
+
+// AggregationOptions enables users to specify constraints on aggregations.
+type AggregationOptions struct {
+	StartInclusive time.Time
+	EndExclusive   time.Time
+	Limit          int
+	FilterFn       TagNameFilterFn
+	Type           AggregationType
+}
+
+// TagNameFilterFn provides a predicate using which aggregation results can be filtered.
+type TagNameFilterFn func(tagName []byte) bool
 
 // Results is a collection of results for a query.
 type Results interface {

@@ -78,6 +78,9 @@ type Session interface {
 	// FetchTaggedIDs resolves the provided query to known IDs.
 	FetchTaggedIDs(namespace ident.ID, q index.Query, opts index.QueryOptions) (iter TaggedIDsIterator, exhaustive bool, err error)
 
+	// Aggregate aggregates values from the database for the given set of contraints.
+	Aggregate(namespace ident.ID, q index.Query, opts index.AggregationOptions) (iter AggregatedTagsIterator, exhaustive bool, err error)
+
 	// ShardID returns the given shard for an ID for callers
 	// to easily discern what shard is failing when operations
 	// for given IDs begin failing
@@ -88,6 +91,22 @@ type Session interface {
 
 	// Close the session
 	Close() error
+}
+
+// AggregatedTagsIterator iterates over a collection of tag names and associated tag values.
+type AggregatedTagsIterator interface {
+	// Next returns whether there are more items in the collection.
+	Next() bool
+
+	// Current returns the current tagName, and associated tagValues iterator.
+	// These remain valid until Next() is called again.
+	Current() (tagName ident.ID, tagValues ident.Iterator)
+
+	// Err returns any error encountered.
+	Err() error
+
+	// Finalize releases any held resources.
+	Finalize()
 }
 
 // TaggedIDsIterator iterates over a collection of IDs with associated tags and namespace.
