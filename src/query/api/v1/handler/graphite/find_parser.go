@@ -24,10 +24,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/m3db/m3/src/query/errors"
-	"github.com/m3db/m3/src/query/graphite/graphite"
 	graphiteStorage "github.com/m3db/m3/src/query/graphite/storage"
 	"github.com/m3db/m3/src/query/storage"
 	"github.com/m3db/m3/src/query/util/json"
@@ -35,60 +33,26 @@ import (
 )
 
 func parseFindParamsToQuery(r *http.Request) (
-	*storage.FetchQuery,
+	*storage.CompleteTagsQuery,
+	string,
 	*xhttp.ParseError,
 ) {
 	values := r.URL.Query()
-	now := time.Now()
-	fromString, untilString := r.FormValue("from"), r.FormValue("until")
-	if len(fromString) == 0 {
-		fromString = "0"
-	}
-
-	if len(untilString) == 0 {
-		untilString = "now"
-	}
-
-	from, err := graphite.ParseTime(
-		fromString,
-		now,
-		tzOffsetForAbsoluteTime,
-	)
-
-	if err != nil {
-		return nil, xhttp.NewParseError(fmt.Errorf("invalid 'from': %s", fromString),
-			http.StatusBadRequest)
-	}
-
-	until, err := graphite.ParseTime(
-		untilString,
-		now,
-		tzOffsetForAbsoluteTime,
-	)
-
-	if err != nil {
-		return nil, xhttp.NewParseError(fmt.Errorf("invalid 'until': %s", untilString),
-			http.StatusBadRequest)
-	}
-
 	query := values.Get("query")
 	if query == "" {
-		return nil, xhttp.NewParseError(errors.ErrNoQueryFound, http.StatusBadRequest)
+		return nil, "", xhttp.NewParseError(errors.ErrNoQueryFound, http.StatusBadRequest)
 	}
 
 	matchers, err := graphiteStorage.TranslateQueryToMatchers(query)
 	if err != nil {
-		return nil, xhttp.NewParseError(fmt.Errorf("invalid 'query': %s", query),
+		return nil, "", xhttp.NewParseError(fmt.Errorf("invalid 'query': %s", query),
 			http.StatusBadRequest)
 	}
 
-	return &storage.FetchQuery{
-		Raw:         query,
-		TagMatchers: matchers,
-		Start:       from,
-		End:         until,
-		Interval:    0,
-	}, nil
+	return &storage.CompleteTagsQuery{
+		CompleteNameOnly: false,
+		TagMatchers:      matchers,
+	}, query, nil
 }
 
 func findResultsJSON(

@@ -21,7 +21,6 @@
 package graphite
 
 import (
-	"bytes"
 	"context"
 	"net/http"
 
@@ -64,47 +63,30 @@ func (h *grahiteFindHandler) ServeHTTP(
 	ctx := context.WithValue(r.Context(), handler.HeaderKey, r.Header)
 	logger := logging.WithContext(ctx)
 	w.Header().Set("Content-Type", "application/json")
-	query, rErr := parseFindParamsToQuery(r)
+	query, raw, rErr := parseFindParamsToQuery(r)
 	if rErr != nil {
 		xhttp.Error(w, rErr.Inner(), rErr.Code())
 		return
 	}
 
 	opts := storage.NewFetchOptions()
-	// FIXME: arnikola, use the tag completion point instead of this one here
-	// if someone finds this in the PR I owe you a beer
-	result, err := h.storage.SearchSeries(ctx, query, opts)
+	result, err := h.storage.CompleteTags(ctx, query, opts)
 	if err != nil {
 		logger.Error("unable to complete tags", zap.Error(err))
 		xhttp.Error(w, err, http.StatusBadRequest)
 		return
 	}
 
-	partCount := graphite.CountMetricParts(query.Raw)
-	partName := graphite.TagName(partCount - 1)
-	seenMap := make(map[string]bool, len(result.Metrics))
-	for _, m := range result.Metrics {
-		tags := m.Tags.Tags
-		index := 0
-		// TODO: make this more performant by computing the index for the tag name.
-		for i, tag := range tags {
-			if bytes.Equal(partName, tag.Name) {
-				index = i
-				break
-			}
+	seenMap := make(map[string]bool, len(result.CompletedTags))
+	for _, tags := range result.CompletedTags {
+		for _, value := range tags.Values {
+			// FIXME: (arnikola) Figure out how to add children; may need to run find
+			// query twice, once with an additional wildcard matcher on the end.
+			seenMap[string(value)] = true
 		}
-
-		value := tags[index].Value
-		// If this value has already been encountered, check if
-		if hadExtra, seen := seenMap[string(value)]; seen && hadExtra {
-			continue
-		}
-
-		hasExtraParts := len(tags) > partCount
-		seenMap[string(value)] = hasExtraParts
 	}
 
-	prefix := graphite.DropLastMetricPart(query.Raw)
+	prefix := graphite.DropLastMetricPart(raw)
 	if len(prefix) > 0 {
 		prefix += "."
 	}
