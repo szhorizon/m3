@@ -153,8 +153,8 @@ type Querier interface {
 		options *FetchOptions,
 	) (block.Result, error)
 
-	// FetchTags returns search results for tags
-	FetchTags(
+	// SearchSeries returns series IDs matching the current query
+	SearchSeries(
 		ctx context.Context,
 		query *FetchQuery,
 		options *FetchOptions,

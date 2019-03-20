@@ -78,6 +78,10 @@ type Session interface {
 	// FetchTaggedIDs resolves the provided query to known IDs.
 	FetchTaggedIDs(namespace ident.ID, q index.Query, opts index.QueryOptions) (iter TaggedIDsIterator, exhaustive bool, err error)
 
+	// FetchTags resolves the optionally provided query to any known tag matchers.
+	// NB: this is a provisional function until the `session` contract is fully defined
+	FetchTags(namespace ident.ID, q index.Query, opts index.AggregateQueryOptions) (tags FetchedTags, exhaustive bool, err error)
+
 	// ShardID returns the given shard for an ID for callers
 	// to easily discern what shard is failing when operations
 	// for given IDs begin failing
@@ -89,6 +93,25 @@ type Session interface {
 	// Close the session
 	Close() error
 }
+
+// FetchedTag represents a tag name and an iterator containing any existing tag
+// values for that iterator.
+// NB: this is a provisional type until the `session` contract is fully defined
+type FetchedTag struct {
+	TagName   ident.ID
+	TagValues ident.Iterator
+}
+
+// FetchedTags is a pooled list of FetchedTags.
+// NB: this is a provisional type until the `session` contract is fully defined
+type FetchedTags struct {
+	Tags []FetchedTag
+	pool ident.Pool
+}
+
+// Close returns all resources held by FetchedTags.
+// NB: this is a provisional type until the `session` contract is fully defined
+func (f *FetchedTags) Close() error { return nil }
 
 // TaggedIDsIterator iterates over a collection of IDs with associated tags and namespace.
 type TaggedIDsIterator interface {

@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/m3db/m3/src/dbnode/clock"
+	"github.com/m3db/m3/src/dbnode/generated/thrift/rpc"
 	"github.com/m3db/m3/src/dbnode/storage/bootstrap/result"
 	"github.com/m3db/m3/src/dbnode/storage/index/compaction"
 	"github.com/m3db/m3/src/m3ninx/doc"
@@ -58,6 +59,13 @@ const (
 // Query is a rich end user query to describe a set of constraints on required IDs.
 type Query struct {
 	idx.Query
+}
+
+type AggregateQueryOptions struct {
+	QueryOptions
+
+	TagNameFilter      [][]byte
+	AggregateQueryType rpc.AggregateQueryType
 }
 
 // QueryOptions enables users to specify constraints on query execution.

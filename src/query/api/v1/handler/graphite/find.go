@@ -71,7 +71,9 @@ func (h *grahiteFindHandler) ServeHTTP(
 	}
 
 	opts := storage.NewFetchOptions()
-	result, err := h.storage.FetchTags(ctx, query, opts)
+	// FIXME: arnikola, use the tag completion point instead of this one here
+	// if someone finds this in the PR I owe you a beer
+	result, err := h.storage.SearchSeries(ctx, query, opts)
 	if err != nil {
 		logger.Error("unable to complete tags", zap.Error(err))
 		xhttp.Error(w, err, http.StatusBadRequest)
