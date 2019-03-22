@@ -60,8 +60,9 @@ func NewM3WrappedStorage(
 	return &m3WrappedStore{m3: m3storage, enforcer: enforcer}
 }
 
-// TranslateQueryToMatchers converts a graphite query to tag matcher pairs.
-func TranslateQueryToMatchers(
+// TranslateQueryToMatchersWithTerminator converts a graphite query to tag
+// matcher pairs, and adds a terminator matcher to the end.
+func TranslateQueryToMatchersWithTerminator(
 	query string,
 ) (models.Matchers, error) {
 	metricLength := graphite.CountMetricParts(query)
@@ -91,7 +92,7 @@ func GetQueryTerminatorTagName(query string) []byte {
 }
 
 func translateQuery(query string, opts FetchOptions) (*storage.FetchQuery, error) {
-	matchers, err := TranslateQueryToMatchers(query)
+	matchers, err := TranslateQueryToMatchersWithTerminator(query)
 	if err != nil {
 		return nil, err
 	}

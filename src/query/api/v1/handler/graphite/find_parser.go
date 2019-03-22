@@ -27,12 +27,14 @@ import (
 
 	"github.com/m3db/m3/src/query/errors"
 	graphiteStorage "github.com/m3db/m3/src/query/graphite/storage"
+	"github.com/m3db/m3/src/query/models"
 	"github.com/m3db/m3/src/query/storage"
 	"github.com/m3db/m3/src/query/util/json"
 	"github.com/m3db/m3/src/x/net/http"
 )
 
-func parseFindParamsToQuery(r *http.Request) (
+func parseFindParamsToQueries(r *http.Request) (
+	*storage.CompleteTagsQuery,
 	*storage.CompleteTagsQuery,
 	string,
 	*xhttp.ParseError,
@@ -40,19 +42,38 @@ func parseFindParamsToQuery(r *http.Request) (
 	values := r.URL.Query()
 	query := values.Get("query")
 	if query == "" {
-		return nil, "", xhttp.NewParseError(errors.ErrNoQueryFound, http.StatusBadRequest)
+		return nil, nil, "", xhttp.NewParseError(errors.ErrNoQueryFound, http.StatusBadRequest)
 	}
 
-	matchers, err := graphiteStorage.TranslateQueryToMatchers(query)
+	matchers, err := graphiteStorage.TranslateQueryToMatchersWithTerminator(query)
 	if err != nil {
-		return nil, "", xhttp.NewParseError(fmt.Errorf("invalid 'query': %s", query),
+		return nil, nil, "", xhttp.NewParseError(fmt.Errorf("invalid 'query': %s", query),
 			http.StatusBadRequest)
 	}
 
-	return &storage.CompleteTagsQuery{
+	// NB: Filter will always be the second last term in the matchers, and the
+	// matchers should always have a length of at least 2 (term + terminator)
+	// so this is a sanity check and unexpected in actual execution.
+	filter := [][]byte{matchers[len(matchers)-2].Name}
+
+	noChildren := &storage.CompleteTagsQuery{
 		CompleteNameOnly: false,
+		FilterNameTags:   filter,
 		TagMatchers:      matchers,
-	}, query, nil
+	}
+
+	clonedMatchers := make([]models.Matcher, len(matchers))
+	copy(clonedMatchers, matchers)
+	// NB: change terminator from `MatchNotRegexp` to `MatchRegexp` to ensure
+	// segments with children are matched.
+	clonedMatchers[len(clonedMatchers)-1].Type = models.MatchRegexp
+	withChildren := &storage.CompleteTagsQuery{
+		CompleteNameOnly: false,
+		FilterNameTags:   filter,
+		TagMatchers:      clonedMatchers,
+	}
+
+	return noChildren, withChildren, query, nil
 }
 
 func findResultsJSON(

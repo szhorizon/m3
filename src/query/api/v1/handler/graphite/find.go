@@ -22,6 +22,7 @@ package graphite
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/m3db/m3/src/query/api/v1/handler"
@@ -56,6 +57,38 @@ func NewFindHandler(
 	}
 }
 
+func mergeTags(
+	noChildren *storage.CompleteTagsResult,
+	withChildren *storage.CompleteTagsResult,
+) (map[string]bool, error) {
+	// sanity check the case.
+	if noChildren.CompleteNameOnly {
+		return nil, errors.New("tags result with no children is completing name only")
+	}
+
+	if withChildren.CompleteNameOnly {
+		return nil, errors.New("tag result with children is completing name only")
+	}
+
+	mapLength := len(noChildren.CompletedTags) + len(withChildren.CompletedTags)
+	tagMap := make(map[string]bool, mapLength)
+
+	for _, tag := range noChildren.CompletedTags {
+		for _, value := range tag.Values {
+			tagMap[string(value)] = false
+		}
+	}
+
+	// NB: fine to overwrite any tags which were present in the `noChildren` map
+	for _, tag := range withChildren.CompletedTags {
+		for _, value := range tag.Values {
+			tagMap[string(value)] = true
+		}
+	}
+
+	return tagMap, nil
+}
+
 func (h *grahiteFindHandler) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -63,27 +96,33 @@ func (h *grahiteFindHandler) ServeHTTP(
 	ctx := context.WithValue(r.Context(), handler.HeaderKey, r.Header)
 	logger := logging.WithContext(ctx)
 	w.Header().Set("Content-Type", "application/json")
-	query, raw, rErr := parseFindParamsToQuery(r)
+	noChildrenQuery, childrenQuery, raw, rErr := parseFindParamsToQueries(r)
 	if rErr != nil {
 		xhttp.Error(w, rErr.Inner(), rErr.Code())
 		return
 	}
 
 	opts := storage.NewFetchOptions()
-	result, err := h.storage.CompleteTags(ctx, query, opts)
+	noChildrenResult, err := h.storage.CompleteTags(ctx, noChildrenQuery, opts)
 	if err != nil {
 		logger.Error("unable to complete tags", zap.Error(err))
 		xhttp.Error(w, err, http.StatusBadRequest)
 		return
 	}
 
-	seenMap := make(map[string]bool, len(result.CompletedTags))
-	for _, tags := range result.CompletedTags {
-		for _, value := range tags.Values {
-			// FIXME: (arnikola) Figure out how to add children; may need to run find
-			// query twice, once with an additional wildcard matcher on the end.
-			seenMap[string(value)] = true
-		}
+	childrenResult, err := h.storage.CompleteTags(ctx, childrenQuery, opts)
+	if err != nil {
+		logger.Error("unable to complete tags", zap.Error(err))
+		xhttp.Error(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// NB: merge results from both queries to specify which series have children
+	seenMap, err := mergeTags(noChildrenResult, childrenResult)
+	if err != nil {
+		logger.Error("unable to complete tags", zap.Error(err))
+		xhttp.Error(w, err, http.StatusBadRequest)
+		return
 	}
 
 	prefix := graphite.DropLastMetricPart(raw)

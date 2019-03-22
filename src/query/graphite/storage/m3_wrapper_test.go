@@ -90,7 +90,7 @@ func TestTranslateQueryTrailingDot(t *testing.T) {
 	assert.Nil(t, translated)
 	assert.Error(t, err)
 
-	matchers, err := TranslateQueryToMatchers(query)
+	matchers, err := TranslateQueryToMatchersWithTerminator(query)
 	assert.Nil(t, matchers)
 	assert.Error(t, err)
 }
